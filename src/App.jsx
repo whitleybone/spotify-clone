@@ -43,7 +43,7 @@ const App = () => {
       <Navbar />
       <Routes>
         <Route
-          path="/"
+          path="/player"
           element={<WebPlayer token={token} setCurrentTrackUri={setCurrentTrackUri} />}
         />
         <Route
