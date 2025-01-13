@@ -42,6 +42,10 @@ const App = () => {
     <>
       <Navbar />
       <Routes>
+        {/* Define the home route "/" */}
+        <Route path="/" element={<WebPlayer token={token} setCurrentTrackUri={setCurrentTrackUri} />} />
+        
+        {/* Define the player and playlist routes */}
         <Route
           path="/player"
           element={<WebPlayer token={token} setCurrentTrackUri={setCurrentTrackUri} />}
