@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 
-const PlayerControls = ({ token }) => {
+const PlayerControls = ({ token, trackUri }) => {
   const [player, setPlayer] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTrack, setCurrentTrack] = useState(null);
+  const [deviceId, setDeviceId] = useState(null);
 
+  // Initialize Spotify Web Playback SDK
   useEffect(() => {
     const loadSpotifySDK = () => {
       return new Promise((resolve) => {
@@ -15,25 +17,13 @@ const PlayerControls = ({ token }) => {
           script.src = "https://sdk.scdn.co/spotify-player.js";
           script.async = true;
           document.body.appendChild(script);
-
-          script.onload = () => {
-            // Ensure the global callback is defined before SDK loads
-            window.onSpotifyWebPlaybackSDKReady = () => {
-              console.log("Spotify Web Playback SDK is ready");
-              resolve();
-            };
-          };
+          script.onload = resolve;
         }
       });
     };
 
     const initializePlayer = async () => {
       await loadSpotifySDK();
-
-      if (!window.Spotify) {
-        console.error("Spotify SDK failed to load");
-        return;
-      }
 
       const spotifyPlayer = new window.Spotify.Player({
         name: "Spotify Web Player",
@@ -44,7 +34,7 @@ const PlayerControls = ({ token }) => {
 
       spotifyPlayer.addListener("ready", ({ device_id }) => {
         console.log("Player is ready with Device ID:", device_id);
-        localStorage.setItem("spotify_device_id", device_id);
+        setDeviceId(device_id);
       });
 
       spotifyPlayer.addListener("player_state_changed", (state) => {
@@ -52,6 +42,19 @@ const PlayerControls = ({ token }) => {
         setCurrentTrack(state.track_window.current_track);
         setIsPlaying(!state.paused);
       });
+
+      spotifyPlayer.addListener("initialization_error", (e) =>
+        console.error("Initialization Error:", e)
+      );
+      spotifyPlayer.addListener("authentication_error", (e) =>
+        console.error("Authentication Error:", e)
+      );
+      spotifyPlayer.addListener("account_error", (e) =>
+        console.error("Account Error:", e)
+      );
+      spotifyPlayer.addListener("playback_error", (e) =>
+        console.error("Playback Error:", e)
+      );
 
       spotifyPlayer.connect();
     };
@@ -63,7 +66,69 @@ const PlayerControls = ({ token }) => {
     return () => {
       if (player) player.disconnect();
     };
-  }, [token]);
+  }, [token, player]);
+
+  // Transfer playback to this device and start playing
+  useEffect(() => {
+    const transferPlayback = async () => {
+      if (deviceId && trackUri) {
+        await fetch("https://api.spotify.com/v1/me/player", {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            device_ids: [deviceId],
+            play: true,
+          }),
+        });
+
+        await fetch("https://api.spotify.com/v1/me/player/play", {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            uris: [trackUri],
+          }),
+        });
+      }
+    };
+
+    transferPlayback();
+  }, [trackUri, deviceId, token]);
+
+  // Play/Pause functionality
+  const togglePlayPause = () => {
+    if (isPlaying) {
+      player.pause();
+    } else {
+      player.resume();
+    }
+    setIsPlaying(!isPlaying);
+  };
+
+  // Skip to the next track
+  const skipToNext = () => {
+    fetch("https://api.spotify.com/v1/me/player/next", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }).catch((err) => console.error("Error skipping to next track:", err));
+  };
+
+  // Skip to the previous track
+  const skipToPrevious = () => {
+    fetch("https://api.spotify.com/v1/me/player/previous", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }).catch((err) => console.error("Error skipping to previous track:", err));
+  };
 
   return (
     <div className="bg-gray-900 text-white p-4 flex items-center justify-between">
@@ -83,16 +148,16 @@ const PlayerControls = ({ token }) => {
         </div>
       </div>
       <div className="flex items-center space-x-4">
-        <button onClick={() => player?.previousTrack()} className="text-xl">
+        <button onClick={skipToPrevious} className="text-xl">
           ⏮
         </button>
         <button
-          onClick={() => (isPlaying ? player?.pause() : player?.resume())}
+          onClick={togglePlayPause}
           className="bg-green-500 text-black px-4 py-2 rounded-full"
         >
           {isPlaying ? "Pause" : "Play"}
         </button>
-        <button onClick={() => player?.nextTrack()} className="text-xl">
+        <button onClick={skipToNext} className="text-xl">
           ⏭
         </button>
       </div>
