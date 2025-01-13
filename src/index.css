@@ -1,0 +1,45 @@
+/* index.css */
+
+/* Import Tailwind base styles */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Global styles for additional customization */
+body {
+  @apply bg-gray-900 text-white font-sans;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Custom scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #2d2d2d; /* Track color */
+}
+
+::-webkit-scrollbar-thumb {
+  background: #525252; /* Thumb color */
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #686868; /* Hover state */
+}
+
+/* Playlist and navigation enhancements */
+.playlist-card {
+  @apply bg-gray-800 hover:bg-gray-700 rounded-lg p-4 cursor-pointer;
+}
+
+.nav-link {
+  @apply text-gray-400 hover:text-white px-4 py-2;
+}
+
+.nav-link.active {
+  @apply text-white font-bold;
+}
