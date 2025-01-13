@@ -1,7 +1,7 @@
 // src/utils/auth.js
 const authEndpoint = "https://accounts.spotify.com/authorize";
 const clientId = "43f79c3d9d0d401b827c55e5017a8e3c"; // Replace with your Spotify Client ID
-const redirectUri = "https://whitleybone.github.io/spotify-clone/"; // Replace with your redirect URI
+const redirectUri = "http://localhost:3000"; // Replace with your redirect URI
 const scopes = [
   "streaming",
   "user-read-playback-state",
